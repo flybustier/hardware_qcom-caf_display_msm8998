@@ -22,6 +22,7 @@
 #include <utils/constants.h>
 #include <utils/String16.h>
 #include <cutils/properties.h>
+#include <bfqio/bfqio.h>
 #include <hardware_legacy/uevent.h>
 #include <sys/resource.h>
 #include <sys/prctl.h>
@@ -48,7 +49,7 @@
 
 #define __CLASS__ "HWCSession"
 
-#ifdef TARGET_MIN_KERNEL_4_14
+#ifdef TARGET_KERNEL_4_14
 #define HWC_UEVENT_SWITCH_HDMI "change@/devices/virtual/graphics/fb2"
 #define CONN_STATE "STATUS="
 #else
@@ -85,6 +86,7 @@ void HWCUEvent::UEventThread(HWCUEvent *hwc_uevent) {
 
   prctl(PR_SET_NAME, uevent_thread_name, 0, 0, 0);
   setpriority(PRIO_PROCESS, 0, HAL_PRIORITY_URGENT_DISPLAY);
+  android_set_rt_ioprio(0, 1);
 
   int status = uevent_init();
   if (!status) {
@@ -957,7 +959,7 @@ android::status_t HWCSession::notifyCallback(uint32_t command, const android::Pa
       break;
 
     case qService::IQService::SET_IDLE_TIMEOUT:
-      SetIdleTimeout(UINT32(input_parcel->readInt32()));
+      setIdleTimeout(UINT32(input_parcel->readInt32()));
       break;
 
     case qService::IQService::SET_FRAME_DUMP_CONFIG:
@@ -976,7 +978,7 @@ android::status_t HWCSession::notifyCallback(uint32_t command, const android::Pa
         int disp_id = INT(input_parcel->readInt32());
         HWCDisplay::DisplayStatus disp_status =
               static_cast<HWCDisplay::DisplayStatus>(input_parcel->readInt32());
-        status = SetDisplayStatus(disp_id, disp_status);
+        status = SetSecondaryDisplayStatus(disp_id, disp_status);
         output_parcel->writeInt32(status);
       }
       break;
@@ -990,7 +992,7 @@ android::status_t HWCSession::notifyCallback(uint32_t command, const android::Pa
 
     case qService::IQService::TOGGLE_SCREEN_UPDATES: {
         int32_t input = input_parcel->readInt32();
-        status = ToggleScreenUpdate(input == 1);
+        status = toggleScreenUpdate(input == 1);
         output_parcel->writeInt32(status);
       }
       break;
@@ -1062,7 +1064,7 @@ android::status_t HWCSession::notifyCallback(uint32_t command, const android::Pa
 
     case qService::IQService::SET_CAMERA_STATUS: {
         uint32_t camera_status = UINT32(input_parcel->readInt32());
-        status = SetCameraLaunchStatus(camera_status);
+        status = setCameraLaunchStatus(camera_status);
       }
       break;
 
@@ -1582,8 +1584,8 @@ int HWCSession::HotPlugHandler(bool connected) {
         // This cannot be avoided due to SurfaceFlinger design
         // limitation in Android P.
         HWCDisplayExternal::Destroy(hwc_display_[HWC_DISPLAY_PRIMARY]);
-        DLOGE("External display is connected. Abort!!");
-        abort();
+        DLOGE("External display is connected. Exit!!");
+        _exit(1);
       }
       break;
     }

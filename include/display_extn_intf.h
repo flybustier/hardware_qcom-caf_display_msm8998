@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,22 +30,11 @@
 #ifndef __DISP_EXTN_INTF_H__
 #define __DISP_EXTN_INTF_H__
 
-#define EARLY_WAKEUP_FEATURE 1
-#define DYNAMIC_EARLY_WAKEUP_CONFIG 1
-#define PASS_COMPOSITOR_PID 1
-
 namespace composer {
 
 class DisplayExtnIntf {
  public:
   virtual int SetContentFps(uint32_t fps) = 0;
-  virtual void RegisterDisplay(uint32_t display_id) = 0;
-  virtual void UnregisterDisplay(uint32_t display_id) = 0;
-  virtual int SetActiveConfig(uint32_t display_id, uint32_t config_id) = 0;
-  virtual int NotifyEarlyWakeUp(bool gpu, bool display) = 0;
-  virtual int NotifyDisplayEarlyWakeUp(uint32_t display_id) = 0;
-  virtual int SetEarlyWakeUpConfig(uint32_t display_id, bool enable) = 0;
-  virtual void SendCompositorPid() = 0;
  protected:
   virtual ~DisplayExtnIntf() { }
 };
